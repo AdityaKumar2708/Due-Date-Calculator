@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SM Due date Calculator</title>
+    <meta
+      name="description"
+      content="SM Due date Calculator for estimating the next aroma diffuser refill date."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card calculator-card">
+        <form id="calculator-form" class="form-grid">
+          <label class="field">
+            <span>System</span>
+            <select id="system" name="system"></select>
+          </label>
+
+          <label class="field">
+            <span>Refill date</span>
+            <input id="refillDate" name="refillDate" type="date" />
+          </label>
+
+          <div class="field field-wide">
+            <div class="field-head">
+              <span>Refill level</span>
+              <strong id="refillLevelValue">100%</strong>
+            </div>
+            <input
+              id="refillLevel"
+              name="refillLevel"
+              type="range"
+              min="10"
+              max="100"
+              step="1"
+              value="100"
+            />
+          </div>
+
+          <div class="field field-wide" id="intensityWrap">
+            <div class="field-head">
+              <span>Intensity</span>
+              <strong id="intensityValue">100%</strong>
+            </div>
+            <input
+              id="intensity"
+              name="intensity"
+              type="range"
+              min="10"
+              max="100"
+              step="1"
+              value="100"
+            />
+          </div>
+
+          <label class="field">
+            <span>Run time per day (hours)</span>
+            <input
+              id="runTimePerDay"
+              name="runTimePerDay"
+              type="number"
+              min="0"
+              max="24"
+              step="0.1"
+              value="24"
+            />
+          </label>
+
+          <div class="field field-wide advanced-box">
+            <div class="field-head">
+              <span>Custom on/off cycle</span>
+            </div>
+            <div class="cycle-grid">
+              <label class="field">
+                <span>Start time</span>
+                <input
+                  id="cycleStartTime"
+                  name="cycleStartTime"
+                  type="time"
+                />
+              </label>
+              <label class="field">
+                <span>Stop time</span>
+                <input
+                  id="cycleStopTime"
+                  name="cycleStopTime"
+                  type="time"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div class="field field-wide hidden" id="cloudMiniWrap">
+            <span>Cloud Mini off time</span>
+            <div class="segmented" role="radiogroup" aria-label="Cloud Mini off time">
+              <label><input type="radio" name="cloudMiniOff" value="60" checked /><span>60s</span></label>
+              <label><input type="radio" name="cloudMiniOff" value="90" /><span>90s</span></label>
+              <label><input type="radio" name="cloudMiniOff" value="120" /><span>120s</span></label>
+            </div>
+          </div>
+
+          <button class="calculate-btn field-wide" type="submit">Calculate due date</button>
+        </form>
+
+        <section class="result-panel" aria-live="polite">
+          <h3 id="dueDate">--</h3>
+          <dl class="result-meta">
+            <div>
+              <dt>Run time</dt>
+              <dd id="runTime">--</dd>
+            </div>
+            <div>
+              <dt>Daily runtime</dt>
+              <dd id="dailyRuntime">--</dd>
+            </div>
+            <div>
+              <dt>Remaining liquid</dt>
+              <dd id="remainingMl">--</dd>
+            </div>
+          </dl>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+  </html>

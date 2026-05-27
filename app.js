@@ -1,244 +1,162 @@
 const systems = {
-  surface: {
-    label: "SM Surface",
-    capacityMl: 500,
-    rateMlPerHour: 3,
-    tolerance: 0.15,
-    mode: "standard",
-  },
-  surface20: {
-    label: "SM Surface 2.0",
-    capacityMl: 700,
-    rateMlPerHour: 3,
-    tolerance: 0.15,
-    mode: "standard",
-  },
-  cloud20: {
-    label: "SM Cloud 2.0",
-    capacityMl: 450,
-    rateMlPerHour: 2.6,
-    tolerance: 0.15,
-    mode: "standard",
-  },
-  cloudMini: {
-    label: "SM Cloud Mini",
-    capacityMl: 100,
-    rateMlPerMinute: 0.2,
-    tolerance: 0.05,
-    mode: "cycle",
-  },
-  sky20: {
-    label: "SM Sky 2.0",
-    capacityMl: 1000,
-    rateMlPerHourPerHead: 4,
-    tolerance: 0.15,
-    mode: "fixedHeads",
-    fixedHeads: 2,
-  },
+  "Cloud": { consumption: 1, container: 180 },
+  "Cloud 2.0": { consumption: 2, container: 450 },
+  "Surface": { consumption: 3.5, container: 500 },
+   "Surface 2.0": { consumption: 3.5, container: 700 },
+  "Sky": { consumption: 6, container: 2000 },
+  "Sky 2.0": { consumption: 8, container: 2000 },
+  "SDD-Direct": { consumption: 1.28, container: 800 },
+  "SXD-Steam": { consumption: 2.2, container: 2000 }, 
+  "SM Dome": { consumption: 1.5, container: 300 },
+  "A80": { consumption: 10, container: 100 },
+  "Tower": { consumption: 7, container: 1000 },
+  "Old Tower": { consumption: 7, container: 1000 },
+  "Cloud Mini": { consumption: 1.5, container: 100 }
 };
 
-const systemSelect = document.getElementById("system");
-const refillDateInput = document.getElementById("refillDate");
-const refillLevelInput = document.getElementById("refillLevel");
-const intensityInput = document.getElementById("intensity");
-const runTimePerDayInput = document.getElementById("runTimePerDay");
-const cycleStartTimeInput = document.getElementById("cycleStartTime");
-const cycleStopTimeInput = document.getElementById("cycleStopTime");
-const refillLevelValue = document.getElementById("refillLevelValue");
-const intensityValue = document.getElementById("intensityValue");
-const dueDateEl = document.getElementById("dueDate");
-const runTimeEl = document.getElementById("runTime");
-const dailyRuntimeEl = document.getElementById("dailyRuntime");
-const remainingMlEl = document.getElementById("remainingMl");
-const cloudMiniWrap = document.getElementById("cloudMiniWrap");
-const intensityWrap = document.getElementById("intensityWrap");
-const form = document.getElementById("calculator-form");
+// Elements
+const systemEl = document.getElementById("system");
+const hoursEl = document.getElementById("hours");
+const intensityEl = document.getElementById("intensity");
+const daysEl = document.getElementById("days");
+const oilEl = document.getElementById("oilPercent");
+const lastDateEl = document.getElementById("lastDate");
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
+// Outputs
+const monthlyEl = document.getElementById("monthly");
+const usableOilEl = document.getElementById("usableOil");
+const daysElOut = document.getElementById("daysRemaining");
+const nextDateEl = document.getElementById("nextDate");
 
-function isoDateFromLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+// Labels
+const hoursVal = document.getElementById("hoursVal");
+const intensityVal = document.getElementById("intensityVal");
+const oilVal = document.getElementById("oilVal");
+const dutyCycle = document.getElementById("dutyCycle");
+const containerInfo = document.getElementById("containerInfo");
+const remainingOil = document.getElementById("remainingOil");
 
-function localDateFromIso(iso) {
-  if (!iso) return null;
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
 
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function startOfLocalDay(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-function formatDays(days) {
-  if (!Number.isFinite(days)) return "--";
-  if (days < 1) {
-    return "Less than 1 day";
-  }
-  const rounded = Math.round(days * 10) / 10;
-  return `${rounded.toLocaleString()} days`;
-}
-
-function formatMl(value) {
-  return `${Math.round(value).toLocaleString()} ml`;
-}
-
-function formatHours(hours) {
-  if (!Number.isFinite(hours)) return "--";
-  const rounded = Math.round(hours * 10) / 10;
-  return `${rounded.toLocaleString()}h/day`;
-}
-
-function formatTimeLabel(timeValue) {
-  if (!timeValue) return "--";
-  const [hours, minutes] = timeValue.split(":").map(Number);
-  const period = hours >= 12 ? "PM" : "AM";
-  const normalizedHours = hours % 12 || 12;
-  return `${normalizedHours}:${String(minutes).padStart(2, "0")} ${period}`;
-}
-
-function getSelectedSystem() {
-  return systems[systemSelect.value];
-}
-
-function getCloudMiniOffSeconds() {
-  const selected = document.querySelector('input[name="cloudMiniOff"]:checked');
-  return Number(selected?.value ?? 60);
-}
-
-function getIntensityFactor(system) {
-  if (system.mode === "cycle") {
-    const offSeconds = getCloudMiniOffSeconds();
-    const onSeconds = 6;
-    return onSeconds / (onSeconds + offSeconds);
-  }
-
-  return Number(intensityInput.value) / 100;
-}
-
-function getRunTimePerDay(system) {
-  if (system.mode === "cycle") {
-    const offSeconds = getCloudMiniOffSeconds();
-    const onSeconds = 6;
-    return (24 * onSeconds) / (onSeconds + offSeconds);
-  }
-
-  if (cycleStartTimeInput.value && cycleStopTimeInput.value) {
-    const [startHour, startMinute] = cycleStartTimeInput.value.split(":").map(Number);
-    const [stopHour, stopMinute] = cycleStopTimeInput.value.split(":").map(Number);
-    let startTotalMinutes = startHour * 60 + startMinute;
-    let stopTotalMinutes = stopHour * 60 + stopMinute;
-
-    if (stopTotalMinutes <= startTotalMinutes) {
-      stopTotalMinutes += 24 * 60;
-    }
-
-    return (stopTotalMinutes - startTotalMinutes) / 60;
-  }
-
-  const runTimePerDay = Number(runTimePerDayInput.value);
-  if (Number.isFinite(runTimePerDay) && runTimePerDay > 0) {
-    return Math.min(runTimePerDay, 24);
-  }
-
-  return 24;
-}
-
-function getConsumptionPerHour(system) {
-  if (system.mode === "standard") {
-    return system.rateMlPerHour;
-  }
-
-  if (system.mode === "cycle") {
-    return system.rateMlPerMinute * 60;
-  }
-
-  return system.rateMlPerHourPerHead * system.fixedHeads;
-}
-
-function calculateDueDate() {
-  const system = getSelectedSystem();
-  const refillDate = localDateFromIso(refillDateInput.value) ?? startOfLocalDay(new Date());
-  const refillLevel = Number(refillLevelInput.value) / 100;
-  const intensityFactor = getIntensityFactor(system);
-  const baseConsumptionPerHour = getConsumptionPerHour(system);
-  const runTimePerDay = getRunTimePerDay(system);
-  const dailyConsumption = baseConsumptionPerHour * intensityFactor * runTimePerDay;
-  const remainingLiquidMl = system.capacityMl * refillLevel;
-
-  if (dailyConsumption <= 0 || remainingLiquidMl <= 0) {
-    return {
-      dueDate: refillDate,
-      runDays: 0,
-      remainingLiquidMl,
-    };
-  }
-
-  const runDays = remainingLiquidMl / dailyConsumption;
-  const dueDate = addDays(refillDate, Math.max(1, Math.ceil(runDays)));
-
-  return {
-    dueDate,
-    runDays,
-    remainingLiquidMl,
-    runTimePerDay,
-  };
-}
-
-function updateView() {
-  const system = getSelectedSystem();
-  const isCloudMini = system.mode === "cycle";
-
-  refillLevelValue.textContent = `${refillLevelInput.value}%`;
-  intensityValue.textContent = isCloudMini
-    ? `${getCloudMiniOffSeconds()}s off`
-    : `${intensityInput.value}%`;
-
-  cloudMiniWrap.classList.toggle("hidden", !isCloudMini);
-  intensityWrap.classList.toggle("hidden", isCloudMini);
-
-  const { dueDate, runDays, remainingLiquidMl, runTimePerDay } = calculateDueDate();
-  dueDateEl.textContent = dateFormatter.format(dueDate);
-  runTimeEl.textContent = formatDays(runDays);
-  dailyRuntimeEl.textContent = formatHours(runTimePerDay);
-  remainingMlEl.textContent = formatMl(remainingLiquidMl);
-}
-
+// ------------------
+// INIT SYSTEM DROPDOWN
+// ------------------
 function populateSystems() {
-  for (const [value, system] of Object.entries(systems)) {
+  Object.keys(systems).forEach((key, index) => {
     const option = document.createElement("option");
-    option.value = value;
-    option.textContent = system.label;
-    systemSelect.appendChild(option);
+    option.value = key;
+    option.textContent = key;
+    systemEl.appendChild(option);
+
+    if (index === 0) systemEl.value = key;
+  });
+}
+
+
+// ------------------
+// LABEL UPDATE
+// ------------------
+function updateLabels() {
+  const hours = hoursEl.value;
+  const intensity = intensityEl.value;
+  const oil = oilEl.value;
+
+  hoursVal.textContent = hours;
+  intensityVal.textContent = intensity;
+  oilVal.textContent = oil;
+
+  dutyCycle.textContent = `ON: ${intensity}s | OFF: ${100 - intensity}s`;
+}
+
+
+// ------------------
+// MAIN CALCULATION
+// ------------------
+function calculate() {
+  const system = systems[systemEl.value];
+  if (!system) return;
+
+  const consumption = system.consumption;
+  const container = system.container;
+
+  const hours = parseFloat(hoursEl.value) || 0;
+  const intensity = (parseFloat(intensityEl.value) || 0) / 100;
+  const days = parseFloat(daysEl.value) || 0;
+  const oilPercent = (parseFloat(oilEl.value) || 0) / 100;
+
+  // Core calculations
+  const daily = consumption * hours * intensity;
+  const weekly = daily * days;
+  const monthly = weekly * 4.33;
+
+  const usableOil = container * oilPercent;
+
+  // Prevent divide by zero
+  if (monthly <= 0) {
+    monthlyEl.textContent = "0 ml";
+    usableOilEl.textContent = usableOil.toFixed(2) + " ml";
+    daysElOut.textContent = "0";
+    nextDateEl.textContent = "--";
+    return;
   }
 
-  systemSelect.value = "surface";
+  const totalDays = (usableOil / monthly) * 30;
+
+  // Date calculation
+  const lastDate = new Date(lastDateEl.value);
+  let nextDate = "--";
+
+  if (!isNaN(lastDate)) {
+    const tempDate = new Date(lastDate);
+    tempDate.setDate(tempDate.getDate() + Math.round(totalDays));
+    nextDate = tempDate.toLocaleDateString();
+  }
+
+  // Output
+  monthlyEl.textContent = monthly.toFixed(2) + " ml";
+  usableOilEl.textContent = usableOil.toFixed(2) + " ml";
+  daysElOut.textContent = Math.round(totalDays);
+  nextDateEl.textContent = nextDate;
+
+  containerInfo.textContent = `Container: ${container} ml`;
+  remainingOil.textContent = `Remaining Oil: ${usableOil.toFixed(2)} ml`;
 }
 
-function setDefaultDate() {
-  refillDateInput.value = isoDateFromLocalDate(new Date());
-}
 
-populateSystems();
-setDefaultDate();
-updateView();
+// ------------------
+// EVENT BINDING (FIXED)
+// ------------------
 
-form.addEventListener("input", updateView);
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  updateView();
+// Sliders → real-time
+hoursEl.addEventListener("input", () => {
+  updateLabels();
+  calculate();
 });
+
+intensityEl.addEventListener("input", () => {
+  updateLabels();
+  calculate();
+});
+
+oilEl.addEventListener("input", () => {
+  updateLabels();
+  calculate();
+});
+
+// Selects → change
+daysEl.addEventListener("change", calculate);
+systemEl.addEventListener("change", calculate);
+lastDateEl.addEventListener("change", calculate);
+
+
+// ------------------
+// INIT
+// ------------------
+function init() {
+  populateSystems();
+  lastDateEl.valueAsDate = new Date();
+
+  updateLabels();
+  calculate();
+}
+
+init();

@@ -1,130 +1,85 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SM Due date Calculator</title>
-    <meta
-      name="description"
-      content="SM Due date Calculator for estimating the next aroma diffuser refill date."
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="shell">
-      <section class="card calculator-card">
-        <form id="calculator-form" class="form-grid">
-          <label class="field">
-            <span>System</span>
-            <select id="system" name="system"></select>
-          </label>
+<head>
+  <meta charset="UTF-8">
+  <title>Consumption Calculator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body> 
 
-          <label class="field">
-            <span>Refill date</span>
-            <input id="refillDate" name="refillDate" type="date" />
-          </label>
+<div class="container">
 
-          <div class="field field-wide">
-            <div class="field-head">
-              <span>Refill level</span>
-              <strong id="refillLevelValue">100%</strong>
-            </div>
-            <input
-              id="refillLevel"
-              name="refillLevel"
-              type="range"
-              min="10"
-              max="100"
-              step="1"
-              value="100"
-            />
-          </div>
+  <!-- LEFT: INPUTS -->
+  <div class="inputs">
 
-          <div class="field field-wide" id="intensityWrap">
-            <div class="field-head">
-              <span>Intensity</span>
-              <strong id="intensityValue">100%</strong>
-            </div>
-            <input
-              id="intensity"
-              name="intensity"
-              type="range"
-              min="10"
-              max="100"
-              step="1"
-              value="100"
-            />
-          </div>
+    <h2>Inputs</h2>
 
-          <label class="field">
-            <span>Run time per day (hours)</span>
-            <input
-              id="runTimePerDay"
-              name="runTimePerDay"
-              type="number"
-              min="0"
-              max="24"
-              step="0.1"
-              value="24"
-            />
-          </label>
+    <label>System</label>
+    <select id="system"></select>
 
-          <div class="field field-wide advanced-box">
-            <div class="field-head">
-              <span>Custom on/off cycle</span>
-            </div>
-            <div class="cycle-grid">
-              <label class="field">
-                <span>Start time</span>
-                <input
-                  id="cycleStartTime"
-                  name="cycleStartTime"
-                  type="time"
-                />
-              </label>
-              <label class="field">
-                <span>Stop time</span>
-                <input
-                  id="cycleStopTime"
-                  name="cycleStopTime"
-                  type="time"
-                />
-              </label>
-            </div>
-          </div>
+    <label>Working Hours (per day)</label>
+    <input type="range" id="hours" min="1" max="24" value="10">
+    <span id="hoursVal">10</span>
 
-          <div class="field field-wide hidden" id="cloudMiniWrap">
-            <span>Cloud Mini off time</span>
-            <div class="segmented" role="radiogroup" aria-label="Cloud Mini off time">
-              <label><input type="radio" name="cloudMiniOff" value="60" checked /><span>60s</span></label>
-              <label><input type="radio" name="cloudMiniOff" value="90" /><span>90s</span></label>
-              <label><input type="radio" name="cloudMiniOff" value="120" /><span>120s</span></label>
-            </div>
-          </div>
+    <label>Intensity (%)</label>
+    <input type="range" id="intensity" min="1" max="100" value="50">
+    <span id="intensityVal">50</span>
+    <small id="dutyCycle"></small>
 
-          <button class="calculate-btn field-wide" type="submit">Calculate due date</button>
-        </form>
+    <label>Working Days (per week)</label>
+    <select id="days">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7" selected>7</option>
+    </select>
 
-        <section class="result-panel" aria-live="polite">
-          <h3 id="dueDate">--</h3>
-          <dl class="result-meta">
-            <div>
-              <dt>Run time</dt>
-              <dd id="runTime">--</dd>
-            </div>
-            <div>
-              <dt>Daily runtime</dt>
-              <dd id="dailyRuntime">--</dd>
-            </div>
-            <div>
-              <dt>Remaining liquid</dt>
-              <dd id="remainingMl">--</dd>
-            </div>
-          </dl>
-        </section>
-      </section>
-    </main>
+    <label>% of Oil</label>
+    <input type="range" id="oilPercent" min="1" max="100" value="100">
+    <span id="oilVal">100</span>
 
-    <script src="app.js"></script>
-  </body>
-  </html>
+    <label>Last Service Date</label>
+    <input type="date" id="lastDate">
+
+  </div>
+
+  <!-- RIGHT: OUTPUT -->
+  <div class="outputs">
+
+    <h2>Results</h2>
+
+    <div class="result-box">
+      <p>Monthly Consumption</p>
+      <h3 id="monthly">0</h3>
+    </div>
+
+    <div class="result-box">
+      <p>Usable Oil</p>
+      <h3 id="usableOil">0</h3>
+    </div>
+
+    <div class="result-box highlight">
+      <p>Days Remaining</p>
+      <h1 id="daysRemaining">0</h1>
+    </div>
+
+    <div class="result-box highlight">
+      <p>Next Service Date</p>
+      <h3 id="nextDate">--</h3>
+    </div>
+
+    <div class="small-info">
+      <p id="containerInfo"></p>
+      <p id="remainingOil"></p>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
